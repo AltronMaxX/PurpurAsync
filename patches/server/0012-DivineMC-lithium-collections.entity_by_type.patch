@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AltronMaxX <max06112004@gmail.com>
+Date: Tue, 16 Jul 2024 13:38:46 +0400
+Subject: [PATCH] DivineMC-lithium-collections.entity_by_type
+
+
+diff --git a/src/main/java/net/minecraft/util/ClassInstanceMultiMap.java b/src/main/java/net/minecraft/util/ClassInstanceMultiMap.java
+index 038710ba934a9a57815dfe9f414b98223b848385..edeed5ea54f4bea3dc9862e22f8e7fecb3e6b3ce 100644
+--- a/src/main/java/net/minecraft/util/ClassInstanceMultiMap.java
++++ b/src/main/java/net/minecraft/util/ClassInstanceMultiMap.java
+@@ -12,9 +12,10 @@ import java.util.List;
+ import java.util.Map;
+ import java.util.Map.Entry;
+ import net.minecraft.Util;
++import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap; // DivineMC
+ 
+ public class ClassInstanceMultiMap<T> extends AbstractCollection<T> {
+-    private final Map<Class<?>, List<T>> byClass = Maps.newHashMap();
++    private final Map<Class<?>, List<T>> byClass = new Reference2ReferenceOpenHashMap<>(); // DivineMC
+     private final Class<T> baseClass;
+     private final List<T> allInstances = Lists.newArrayList();
+ 

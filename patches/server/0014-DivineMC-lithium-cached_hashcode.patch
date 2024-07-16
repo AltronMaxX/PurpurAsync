@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AltronMaxX <max06112004@gmail.com>
+Date: Tue, 16 Jul 2024 13:41:37 +0400
+Subject: [PATCH] DivineMC-lithium-cached_hashcode
+
+
+diff --git a/src/main/java/net/minecraft/world/level/block/Block.java b/src/main/java/net/minecraft/world/level/block/Block.java
+index 6d012ca724f1373bcf9e8d86d22194143f56d52b..daad0d67428bb49d7f0b37bec430ceb0d30564cf 100644
+--- a/src/main/java/net/minecraft/world/level/block/Block.java
++++ b/src/main/java/net/minecraft/world/level/block/Block.java
+@@ -633,11 +633,19 @@ public class Block extends BlockBehaviour implements ItemLike {
+         private final BlockState first;
+         private final BlockState second;
+         private final Direction direction;
++        private final int hash; // DivineMC - lithium: cached_hashcode
+ 
+         public BlockStatePairKey(BlockState self, BlockState other, Direction facing) {
+             this.first = self;
+             this.second = other;
+             this.direction = facing;
++
++            // DivineMC start - lithium: cached_hashcode
++            int i = this.first.hashCode();
++            i = 31 * i + this.second.hashCode();
++            i = 31 * i + this.direction.hashCode();
++            this.hash = i;
++            // DivineMC end
+         }
+ 
+         public boolean equals(Object object) {
+@@ -653,11 +661,7 @@ public class Block extends BlockBehaviour implements ItemLike {
+         }
+ 
+         public int hashCode() {
+-            int i = this.first.hashCode();
+-
+-            i = 31 * i + this.second.hashCode();
+-            i = 31 * i + this.direction.hashCode();
+-            return i;
++            return this.hash; // DivineMC - lithium: cached_hashcode
+         }
+     }
+ }

@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: AltronMaxX <max06112004@gmail.com>
+Date: Tue, 16 Jul 2024 13:32:02 +0400
+Subject: [PATCH] DivineMC-lithium-collections.gamerules
+
+
+diff --git a/src/main/java/net/minecraft/world/level/GameRules.java b/src/main/java/net/minecraft/world/level/GameRules.java
+index 89e327bc3a45879fe68887c7aadb077f31a770eb..bb0fcf15fa49d6b352b11d4cffe4e2c8b0fe5c30 100644
+--- a/src/main/java/net/minecraft/world/level/GameRules.java
++++ b/src/main/java/net/minecraft/world/level/GameRules.java
+@@ -30,6 +30,7 @@ import net.minecraft.server.MinecraftServer;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.server.level.ServerPlayer;
+ import org.slf4j.Logger;
++import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+ 
+ public class GameRules {
+ 
+@@ -149,7 +150,7 @@ public class GameRules {
+     }
+ 
+     private GameRules(Map<GameRules.Key<?>, GameRules.Value<?>> rules) {
+-        this.rules = rules;
++        this.rules = new Object2ObjectOpenHashMap<>(rules); // DivineMC - lithium: collections.gamerules
+ 
+         // Paper start - Perf: Use array for gamerule storage
+         int arraySize = rules.keySet().stream().mapToInt(key -> key.gameRuleIndex).max().orElse(-1) + 1;
