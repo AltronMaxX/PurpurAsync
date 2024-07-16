@@ -136,6 +136,94 @@ index 97f8ef86a0e398b7e4aa3445d5e413addbe3a9e3..3de97c2c90e0afd454c11b9df0dda580
      public abstract BlockState getBlockState(final int x, final int y, final int z); // Paper
      @Nullable
      public abstract BlockState setBlockState(BlockPos pos, BlockState state, boolean moved);
+diff --git a/src/main/java/net/minecraft/world/level/chunk/ChunkGenerator.java b/src/main/java/net/minecraft/world/level/chunk/ChunkGenerator.java
+index 488938c32a48437721a71d294c77468f00c035b9..227279ee44c5a80acc43ffcd5d289d566431e1f1 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/ChunkGenerator.java
++++ b/src/main/java/net/minecraft/world/level/chunk/ChunkGenerator.java
+@@ -77,6 +77,10 @@ import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStruct
+ import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
+ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+ import org.apache.commons.lang3.mutable.MutableBoolean;
++// Matter start
++import su.plo.matter.Globals;
++import su.plo.matter.WorldgenCryptoRandom;
++// Matter end
+ 
+ public abstract class ChunkGenerator {
+ 
+@@ -344,7 +348,11 @@ public abstract class ChunkGenerator {
+                 return structure.step().ordinal();
+             }));
+             List<FeatureSorter.StepFeatureData> list = (List) this.featuresPerStep.get();
+-            WorldgenRandom seededrandom = new WorldgenRandom(new XoroshiroRandomSource(RandomSupport.generateUniqueSeed()));
++            // Matter start - Feature Secure Seed
++            WorldgenRandom seededrandom = new WorldgenCryptoRandom(
++                    blockposition.getX(), blockposition.getZ(), Globals.Salt.UNDEFINED, 0
++            );
++            // Matter end
+             long i = seededrandom.setDecorationSeed(generatoraccessseed.getSeed(), blockposition.getX(), blockposition.getZ());
+             Set<Holder<Biome>> set = new ObjectArraySet();
+ 
+@@ -583,9 +591,11 @@ public abstract class ChunkGenerator {
+                     ArrayList<StructureSet.StructureSelectionEntry> arraylist = new ArrayList(list.size());
+ 
+                     arraylist.addAll(list);
+-                    WorldgenRandom seededrandom = new WorldgenRandom(new LegacyRandomSource(0L));
+-
+-                    seededrandom.setLargeFeatureSeed(placementCalculator.getLevelSeed(), chunkcoordintpair.x, chunkcoordintpair.z);
++                    // Matter start - Feature Secure Seed
++                    WorldgenRandom seededrandom = new WorldgenCryptoRandom(
++                            chunkcoordintpair.x, chunkcoordintpair.z, Globals.Salt.GENERATE_FEATURE, 0
++                    );
++                    // Matter end
+                     int i = 0;
+ 
+                     StructureSet.StructureSelectionEntry structureset_a1;
+diff --git a/src/main/java/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java b/src/main/java/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
+index a6b6e5ea191c0e2cd7a2e4f01b89d8af40a83c1b..0c91e5d77128c0ad5eca34ec65cc4fc2f234fc2b 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
++++ b/src/main/java/net/minecraft/world/level/chunk/ChunkGeneratorStructureState.java
+@@ -38,6 +38,10 @@ import org.slf4j.Logger;
+ import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
+ import org.spigotmc.SpigotWorldConfig;
+ // Spigot end
++// Matter start
++import su.plo.matter.Globals;
++import su.plo.matter.WorldgenCryptoRandom;
++// Matter end
+ 
+ public class ChunkGeneratorStructureState {
+ 
+@@ -224,15 +228,9 @@ public class ChunkGeneratorStructureState {
+             List<CompletableFuture<ChunkPos>> list = new ArrayList(j);
+             int k = placement.spread();
+             HolderSet<Biome> holderset = placement.preferredBiomes();
+-            RandomSource randomsource = RandomSource.create();
++            // Matter - Feature Secure Seed
++            RandomSource randomsource = new WorldgenCryptoRandom(0, 0, Globals.Salt.STRONGHOLDS, 0);
+ 
+-            // Paper start - Add missing structure set seed configs
+-            if (this.conf.strongholdSeed != null && structureSetEntry.is(net.minecraft.world.level.levelgen.structure.BuiltinStructureSets.STRONGHOLDS)) {
+-                randomsource.setSeed(this.conf.strongholdSeed);
+-            } else {
+-            // Paper end - Add missing structure set seed configs
+-            randomsource.setSeed(this.concentricRingsSeed);
+-            } // Paper - Add missing structure set seed configs
+             double d0 = randomsource.nextDouble() * Math.PI * 2.0D;
+             int l = 0;
+             int i1 = 0;
+diff --git a/src/main/java/net/minecraft/world/level/chunk/status/ChunkStep.java b/src/main/java/net/minecraft/world/level/chunk/status/ChunkStep.java
+index 4e56398a6fb8b97199f4c74ebebc1055fb718dcf..532dc249df8f5386b3869da22919f0d6f68847d4 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/status/ChunkStep.java
++++ b/src/main/java/net/minecraft/world/level/chunk/status/ChunkStep.java
+@@ -61,6 +61,7 @@ public final class ChunkStep implements ca.spottedleaf.moonrise.patches.chunk_sy
+ 
+     public CompletableFuture<ChunkAccess> apply(WorldGenContext context, StaticCache2D<GenerationChunkHolder> staticCache2D, ChunkAccess chunk) {
+         if (chunk.getPersistedStatus().isBefore(this.targetStatus)) {
++            su.plo.matter.Globals.setupGlobals(context.level()); // Leaf - Matter - Feature Secure Seed
+             ProfiledDuration profiledDuration = JvmProfiler.INSTANCE.onChunkGenerate(chunk.getPos(), context.level().dimension(), this.targetStatus.getName());
+             return this.task.doWork(context, this, staticCache2D, chunk).thenApply(generated -> this.completeChunkGeneration(generated, profiledDuration));
+         } else {
 diff --git a/src/main/java/net/minecraft/world/level/levelgen/WorldOptions.java b/src/main/java/net/minecraft/world/level/levelgen/WorldOptions.java
 index 5ae04ec610a885e2ed73e942879a27fe8640471c..d92db3c189bbee39cb3567b24af5be32d7f9db80 100644
 --- a/src/main/java/net/minecraft/world/level/levelgen/WorldOptions.java
